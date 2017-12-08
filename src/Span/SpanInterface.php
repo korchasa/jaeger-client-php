@@ -9,7 +9,7 @@ use Jaeger\Span\Context\ContextAwareInterface;
 
 interface SpanInterface extends ContextAwareInterface
 {
-    public function finish();
+    public function finish(int $duration = 0) : SpanInterface;
 
     public function addTag(Tag $tag): SpanInterface;
 

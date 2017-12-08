@@ -9,7 +9,6 @@ use Jaeger\Span\Context\ContextAwareInterface;
 use Jaeger\Span\Context\SpanContext;
 use Jaeger\Span\Factory\SpanFactoryInterface;
 use Jaeger\Span\SpanInterface;
-use Ds\Stack;
 
 class Tracer implements TracerInterface, ContextAwareInterface, InjectableInterface, FlushableInterface
 {
@@ -19,7 +18,7 @@ class Tracer implements TracerInterface, ContextAwareInterface, InjectableInterf
 
     private $client;
 
-    public function __construct(Stack $stack, SpanFactoryInterface $factory, ClientInterface $client)
+    public function __construct(\SplStack $stack, SpanFactoryInterface $factory, ClientInterface $client)
     {
         $this->stack = $stack;
         $this->factory = $factory;
@@ -29,6 +28,7 @@ class Tracer implements TracerInterface, ContextAwareInterface, InjectableInterf
     public function flush(): FlushableInterface
     {
         $this->client->flush();
+
         return $this;
     }
 
@@ -45,7 +45,7 @@ class Tracer implements TracerInterface, ContextAwareInterface, InjectableInterf
             return null;
         }
 
-        return $this->stack->peek();
+        return $this->stack->top();
     }
 
     /**
@@ -78,17 +78,17 @@ class Tracer implements TracerInterface, ContextAwareInterface, InjectableInterf
         }
     }
 
-    public function start(string $operationName, array $tags = []): SpanInterface
+    public function start(string $operationName, array $tags = [], SpanContext $context = null): SpanInterface
     {
-        $span = $this->factory->create($operationName, $tags, $this->getContext());
+        $span = $this->factory->create($operationName, $tags, $context ?? $this->getContext());
         $this->stack->push($span->getContext());
 
         return $span;
     }
 
-    public function finish(SpanInterface $span): TracerInterface
+    public function finish(SpanInterface $span, int $duration = 0): TracerInterface
     {
-        $this->client->add($span->finish());
+        $this->client->add($span->finish($duration));
         $this->stack->pop();
 
         return $this;
