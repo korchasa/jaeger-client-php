@@ -8,8 +8,7 @@
   },
   "require": {
     "php": ">=7.1",
-    "packaged/thrift": "@stable",
-    "php-ds/php-ds": "@stable"
+    "packaged/thrift": "@stable"
   },
   "require-dev": {
     "phpunit/phpunit": "@stable"
