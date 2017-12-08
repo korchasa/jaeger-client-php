@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Jaeger\Tracer;
 
 use Jaeger\Client\ClientInterface;
+use Jaeger\Codec\TextCodec;
 use Jaeger\Span\Context\ContextAwareInterface;
 use Jaeger\Span\Context\SpanContext;
 use Jaeger\Span\Factory\SpanFactoryInterface;
@@ -28,16 +29,12 @@ class Tracer implements TracerInterface, ContextAwareInterface, InjectableInterf
     public function flush(): FlushableInterface
     {
         $this->client->flush();
-        if (0 !== $this->stack->count()) {
-            throw new \RuntimeException('Corrupted stack');
-        }
-
         return $this;
     }
 
     public function assign(SpanContext $context): InjectableInterface
     {
-        $this->stack->push([$context]);
+        $this->stack->push($context);
 
         return $this;
     }
@@ -49,6 +46,36 @@ class Tracer implements TracerInterface, ContextAwareInterface, InjectableInterf
         }
 
         return $this->stack->peek();
+    }
+
+    /**
+     * @param SpanContext $span
+     * @param string $format
+     * @param mixed $carrier
+     * @throws \Exception
+     */
+    public function inject(SpanContext $span, string $format, &$carrier)
+    {
+        if ($format == 'text') {
+            $carrier = (new TextCodec())->encode($span);
+        } else {
+            throw new \Exception("not support format $format");
+        }
+    }
+
+    /**
+     * @param string $format
+     * @param mixed $carrier
+     * @return SpanContext|null
+     * @throws \Exception
+     */
+    public function extract(string $format, $carrier): ?SpanContext
+    {
+        if ($format == 'text') {
+            return (new TextCodec())->decode($carrier);
+        } else {
+            throw new \Exception("not support format $format");
+        }
     }
 
     public function start(string $operationName, array $tags = []): SpanInterface
