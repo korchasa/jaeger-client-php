@@ -8,10 +8,10 @@
   },
   "require": {
     "php": ">=7.1",
-    "packaged/thrift": "@stable"
+    "packaged/thrift": "@stable",
+    "php-ds/php-ds": "@stable"
   },
   "require-dev": {
-    "php-ds/php-ds": "@stable",
     "phpunit/phpunit": "@stable"
   },
   "minimum-stability": "dev",
