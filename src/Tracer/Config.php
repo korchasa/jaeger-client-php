@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Jaeger\Tracer;
 
-use Ds\Stack;
 use Jaeger\Client\ThriftClient;
 use Jaeger\Id\RandomIntGenerator;
 use Jaeger\Sampler\ConstSampler;
@@ -11,6 +10,7 @@ use Jaeger\Sampler\ProbabilisticSampler;
 use Jaeger\Span\Factory\SpanFactory;
 use Jaeger\Thrift\Agent\AgentClient;
 use Jaeger\Transport\TUDPTransport;
+use SplStack;
 use Thrift\Protocol\TCompactProtocol;
 use Thrift\Transport\TBufferedTransport;
 
@@ -19,7 +19,7 @@ class Config
     private $defaults = [
         'agent_host' => 'localhost',
         'agent_port' => 6831,
-        'sample' => 0.01,
+        'send_ratio' => 1,
         'buffer_size' => 16384
     ];
 
@@ -32,7 +32,7 @@ class Config
     public function create($serviceName, array $options = [])
     {
         $config = $this->config($options);
-        $stack = new Stack();
+        $stack = new SplStack();
         $factory = new SpanFactory(new RandomIntGenerator(), $this->sampler($config));
         $udpTransport = new TUDPTransport($config['agent_host'], $config['agent_port']);
         $bufferedTransport = new TBufferedTransport($udpTransport, $config['buffer_size']);
@@ -45,12 +45,12 @@ class Config
 
     private function sampler($config)
     {
-        if (is_bool($config['sample'])) {
-            return new ConstSampler($config['sample']);
-        } elseif (is_float($config['sample'])) {
-            return new ProbabilisticSampler($config['sample']);
+        if (is_int($config['send_ratio'])) {
+            return new ConstSampler((boolean) $config['send_ratio']);
+        } elseif (is_float($config['send_ratio'])) {
+            return new ProbabilisticSampler($config['send_ratio']);
         } else {
-            throw new \InvalidArgumentException('sample option must be a boolean or float');
+            throw new \InvalidArgumentException('sample option must be a int or float');
         }
     }
 

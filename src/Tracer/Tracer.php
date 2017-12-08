@@ -52,15 +52,18 @@ class Tracer implements TracerInterface, ContextAwareInterface, InjectableInterf
      * @param SpanContext $span
      * @param string $format
      * @param mixed $carrier
+     * @return mixed|null
      * @throws \Exception
      */
-    public function inject(SpanContext $span, string $format, &$carrier)
+    public function inject(SpanContext $span, string $format, &$carrier = null)
     {
         if ($format == 'text') {
             $carrier = (new TextCodec())->encode($span);
         } else {
             throw new \Exception("not support format $format");
         }
+
+        return $carrier;
     }
 
     /**
