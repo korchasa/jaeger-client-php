@@ -29,7 +29,7 @@ class Config
      * @param array $options
      * @return Tracer
      */
-    public function create($serviceName, array $options = [])
+    public function create($serviceName, array $options = []): Tracer
     {
         $config = $this->config($options);
         $stack = new SplStack();
@@ -41,6 +41,20 @@ class Config
         $agent = new AgentClient($protocol);
         $client = new ThriftClient($serviceName, $agent);
         return new Tracer($stack, $factory, $client);
+    }
+
+    public function createSimple($serviceName, array $options = []): SimpleTracer
+    {
+        $config = $this->config($options);
+        $stack = new SplStack();
+        $factory = new SpanFactory(new RandomIntGenerator(), $this->sampler($config));
+        $udpTransport = new TUDPTransport($config['agent_host'], $config['agent_port']);
+        $bufferedTransport = new TBufferedTransport($udpTransport, $config['buffer_size'], $config['buffer_size']);
+        $bufferedTransport->open();
+        $protocol = new TCompactProtocol($bufferedTransport);
+        $agent = new AgentClient($protocol);
+        $client = new ThriftClient($serviceName, $agent);
+        return new SimpleTracer($stack, $factory, $client);
     }
 
     private function sampler($config)
