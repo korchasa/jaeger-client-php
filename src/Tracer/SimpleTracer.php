@@ -139,21 +139,17 @@ class SimpleTracer implements FlushableInterface
 
     public function log(string $message, string $level = 'DEBUG')
     {
-//        var_dump($message);
-        $this->getCurrent()->addLog(new UserLog(
-            $level,
-$message
-//            $this->reduceLength($message, static::MAX_TAG_SYMBOLS - mb_strlen($level))
-        ));
+        $this->getCurrent()->addLog(new UserLog($level, $message));
 
         return $this;
     }
 
     public function error(string $message)
     {
+        $call = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0];
         $this->getCurrent()->addLog(new ErrorLog(
-            $this->reduceLength($message, static::MAX_TAG_SYMBOLS - 10),
-            ''
+            $message,
+            "{$call['file']}:{$call['line']}"
         ));
 
         return $this;
@@ -169,16 +165,4 @@ $message
             return LongTag::class;
         }
     }
-
-    private function reduceLength(string $string, int $maxLength): string
-    {
-        if (mb_strlen($string) < ($maxLength - 3)) {
-            return $string;
-        } else {
-            $a= mb_substr($string, 0, $maxLength - 3).'...';
-            var_dump($a);
-            return $a;
-        }
-    }
-
 }
