@@ -49,16 +49,16 @@ class TUDPTransport extends TTransport
         }
 
         $length = strlen($buf);
-        while (true) {
-            $result = @socket_write($this->socket, $buf);
-            if ($result === false) {
-                break;
+        while ($length > 0) {
+            $sent = socket_write($this->socket, $buf, $length);
+            if (false === $sent) {
+                throw new \Exception(socket_strerror(socket_last_error()));
+            } else if ($sent < $length) {
+                $buf = substr($buf, $sent);
+                $length -= $sent;
+            } else {
+                return;
             }
-            if ($result >= $length) {
-                break;
-            }
-            $buf = substr($buf, $result);
-            $length -= $result;
         }
     }
 }
